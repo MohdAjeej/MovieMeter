@@ -108,7 +108,7 @@ export function MovieSearch() {
       >
         <div className="grid gap-2">
           <label className="text-sm font-medium text-white/80" htmlFor="imdbId">
-            IMDb Movie ID
+            IMDb ID or URL
           </label>
           <div className="relative">
             <input
@@ -116,7 +116,7 @@ export function MovieSearch() {
               suppressHydrationWarning
               value={imdbId}
               onChange={(e) => setImdbId(e.target.value)}
-              placeholder="tt0133093"
+              placeholder="tt0133093 or IMDb link"
               autoComplete="off"
               spellCheck={false}
               className={cx(

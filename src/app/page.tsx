@@ -1,15 +1,50 @@
 import { MovieSearch } from "@/components/MovieSearch";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CarouselRow } from "@/components/CarouselRow";
-import { curated } from "@/lib/curated";
+import { SearchHotkeyListener } from "@/components/SearchHotkeyListener";
+import { curated, type CuratedItem } from "@/lib/curated";
+import { fetchOmdbMovieByImdbId } from "@/lib/omdb";
+import type { PosterCardItem } from "@/components/PosterCard";
 
-export default function Home() {
+async function hydrateCurated(items: CuratedItem[]): Promise<PosterCardItem[]> {
+  return Promise.all(
+    items.map(async (item) => {
+      try {
+        const omdb = await fetchOmdbMovieByImdbId(item.imdbId);
+        return {
+          imdbId: item.imdbId,
+          title: omdb.Title || item.title,
+          year: (omdb.Year || item.year)?.slice(0, 4),
+          posterUrl: omdb.Poster && omdb.Poster !== "N/A" ? omdb.Poster : null,
+          badge: item.badge,
+        };
+      } catch {
+        return {
+          imdbId: item.imdbId,
+          title: item.title,
+          year: item.year,
+          posterUrl: null,
+          badge: item.badge,
+        };
+      }
+    }),
+  );
+}
+
+export default async function Home() {
+  const [trending, topRated, sciFi] = await Promise.all([
+    hydrateCurated(curated.trending),
+    hydrateCurated(curated.topRated),
+    hydrateCurated(curated.sciFi),
+  ]);
+
   return (
-    <div className="min-h-screen bg-[#0c1012] text-white dark:bg-[#0c1012]">
+    <div className="min-h-screen bg-[#0c1012] text-white">
       <SiteHeader />
+      <SearchHotkeyListener />
 
       <main className="relative mx-auto w-full max-w-6xl px-4 pb-24 pt-10 sm:px-6">
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/5 via-white/3 to-transparent p-6 ring-1 ring-white/10">
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white/5 via-white/0 to-transparent p-6 ring-1 ring-white/10">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -top-40 right-[-120px] h-[460px] w-[460px] rounded-full bg-[#f5c518]/10 blur-3xl" />
             <div className="absolute bottom-[-220px] left-[-120px] h-[520px] w-[520px] rounded-full bg-cyan-400/10 blur-3xl" />
@@ -26,11 +61,11 @@ export default function Home() {
               <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
                 Search by IMDb link. Get an instant, sentiment-driven snapshot.
               </h1>
-              <p className="mt-4 max-w-xl text-pretty text-base leading-7 text-white/65">
+              <p className="mt-3 max-w-xl text-pretty text-[15px] leading-7 text-white/70">
                 Paste an IMDb URL (like `https://www.imdb.com/title/tt0133093/`) or just the ID. We fetch details and
                 translate audience signals into a clear verdict.
               </p>
-              <div className="mt-7 rounded-3xl bg-white/5 p-5 ring-1 ring-white/10 backdrop-blur">
+              <div className="mt-6 rounded-3xl bg-black/40 p-5 ring-1 ring-white/10 backdrop-blur">
                 <MovieSearch />
               </div>
             </div>
@@ -58,26 +93,50 @@ export default function Home() {
           </div>
         </section>
 
-        <div id="discover" className="mt-12">
+        <section id="discover" className="mt-12">
+          <header className="mb-4 flex items-baseline justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-white">Discover</h2>
+              <p className="mt-1 text-sm text-white/60">
+                Curated rows inspired by popular movie platforms.
+              </p>
+            </div>
+            <span className="text-xs text-white/45">Scroll horizontally to explore →</span>
+          </header>
           <CarouselRow
             title="Trending worldwide"
             subtitle="Curated picks to explore the redesigned UI"
-            items={curated.trending}
+            items={trending}
             ranked
           />
           <CarouselRow
             title="Top rated"
             subtitle="Evergreen classics worth revisiting"
-            items={curated.topRated}
+            items={topRated}
           />
           <CarouselRow
             title="Mind-bending sci‑fi"
             subtitle="If you liked The Matrix…"
-            items={curated.sciFi}
+            items={sciFi}
           />
-        </div>
+        </section>
 
-        <div id="charts" />
+        <section id="charts" className="mt-16 border-t border-white/10 pt-10">
+          <header className="mb-4 flex items-baseline justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight text-white">Charts</h2>
+              <p className="mt-1 text-sm text-white/60">
+                A lightweight take on Top 10 style lists.
+              </p>
+            </div>
+          </header>
+          <CarouselRow
+            title="Top 10 classics"
+            subtitle="Ranked by cultural impact (curated)"
+            items={topRated}
+            ranked
+          />
+        </section>
 
         <section className="mt-16 border-t border-white/10 pt-10">
           <h2 className="text-lg font-semibold tracking-tight text-white">How it works</h2>

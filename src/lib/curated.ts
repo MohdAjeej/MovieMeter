@@ -1,11 +1,15 @@
-import type { PosterCardItem } from "@/components/PosterCard";
+export type CuratedItem = {
+  imdbId: string;
+  title: string;
+  year?: string;
+  badge?: string;
+};
 
-// Curated samples for the redesigned UI (no extra API calls).
-// These keep the UX rich while preserving the assignment's core "IMDb ID → insights" flow.
+// Curated samples by IMDb ID; poster/ratings will be hydrated server-side.
 export const curated: {
-  trending: PosterCardItem[];
-  topRated: PosterCardItem[];
-  sciFi: PosterCardItem[];
+  trending: CuratedItem[];
+  topRated: CuratedItem[];
+  sciFi: CuratedItem[];
 } = {
   trending: [
     {

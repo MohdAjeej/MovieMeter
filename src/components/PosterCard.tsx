@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 export type PosterCardItem = {
   imdbId: string;
@@ -17,50 +16,26 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 export function PosterCard({ item, rank }: { item: PosterCardItem; rank?: number }) {
-  const [posterUrl, setPosterUrl] = useState<string | null | undefined>(item.posterUrl);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (posterUrl) return;
-
-    async function load() {
-      try {
-        const res = await fetch(`/api/movie?imdbId=${encodeURIComponent(item.imdbId)}`);
-        const json = (await res.json()) as any;
-        if (!cancelled && json?.movie?.posterUrl) {
-          setPosterUrl(json.movie.posterUrl as string);
-        }
-      } catch {
-        // ignore; fallback "No poster" will be shown
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [item.imdbId, posterUrl]);
-
   return (
     <Link
       href={`/title/${item.imdbId}`}
       className={cx(
         "group relative block w-[156px] shrink-0",
-        "rounded-2xl bg-white/5 ring-1 ring-white/10",
-        "transition-transform hover:-translate-y-1",
+        "rounded-2xl bg-white/5 ring-1 ring-white/10 shadow-sm shadow-black/20",
+        "transition-transform transition-shadow hover:-translate-y-1 hover:shadow-lg hover:shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70",
       )}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-2xl">
-        {posterUrl ? (
+        {item.posterUrl ? (
           <Image
-            src={posterUrl}
+            src={item.posterUrl}
             alt={`${item.title} poster`}
             fill
             sizes="156px"
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-white/45">
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/5 to-white/0 text-xs text-white/45">
             No poster
           </div>
         )}
@@ -81,7 +56,9 @@ export function PosterCard({ item, rank }: { item: PosterCardItem; rank?: number
       </div>
 
       <div className="px-3 pb-3 pt-2">
-        <p className="truncate text-xs font-semibold text-white/90">{item.title}</p>
+        <p className="truncate text-xs font-semibold text-white/90 group-hover:text-white">
+          {item.title}
+        </p>
         <p className="mt-0.5 truncate text-[11px] text-white/55">{item.year ?? "—"}</p>
       </div>
     </Link>
