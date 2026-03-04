@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export type PosterCardItem = {
   imdbId: string;
@@ -14,6 +17,30 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 export function PosterCard({ item, rank }: { item: PosterCardItem; rank?: number }) {
+  const [posterUrl, setPosterUrl] = useState<string | null | undefined>(item.posterUrl);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (posterUrl) return;
+
+    async function load() {
+      try {
+        const res = await fetch(`/api/movie?imdbId=${encodeURIComponent(item.imdbId)}`);
+        const json = (await res.json()) as any;
+        if (!cancelled && json?.movie?.posterUrl) {
+          setPosterUrl(json.movie.posterUrl as string);
+        }
+      } catch {
+        // ignore; fallback "No poster" will be shown
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [item.imdbId, posterUrl]);
+
   return (
     <Link
       href={`/title/${item.imdbId}`}
@@ -24,9 +51,9 @@ export function PosterCard({ item, rank }: { item: PosterCardItem; rank?: number
       )}
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-2xl">
-        {item.posterUrl ? (
+        {posterUrl ? (
           <Image
-            src={item.posterUrl}
+            src={posterUrl}
             alt={`${item.title} poster`}
             fill
             sizes="156px"
